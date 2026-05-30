@@ -35,7 +35,7 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: bridge mdb { add | del | replace } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
 		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ] [ dst IPADDR ]\n"
-		"              [ dst_port DST_PORT ] [ vni VNI ] [ src_vni SRC_VNI ] [ via DEV ]\n"
+		"              [ dst_port DST_PORT ] [ vni VNI ] [ src_vni SRC_VNI ] [ via DEV ] [ stream_reserved ]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n"
 		"       bridge mdb get dev DEV grp GROUP [ src SOURCE ] [ vid VID ] [ src_vni SRC_VNI ]\n"
 		"       bridge mdb flush dev DEV [ port PORT ] [ vid VID ] [ src_vni SRC_VNI ] [ proto PROTO ]\n"
@@ -258,6 +258,8 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 		print_string(PRINT_ANY, NULL, " %s", "blocked");
 	if (e->flags & MDB_FLAGS_OFFLOAD_FAILED)
 		print_string(PRINT_ANY, NULL, " %s", "offload_failed");
+	if (e->flags & MDB_FLAGS_STREAM_RESERVED)
+		print_string(PRINT_ANY, NULL, " %s", "stream_reserved");
 	close_json_array(PRINT_JSON, NULL);
 
 	if (e->vid)
@@ -706,6 +708,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	char *src_list = NULL, *proto = NULL, *dst = NULL;
 	struct br_mdb_entry entry = {};
 	bool set_attrs = false;
+	__u32 mdb_flags = 0;
 	short vid = 0;
 
 	while (argc > 0) {
@@ -723,6 +726,9 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 				entry.state |= MDB_PERMANENT;
 		} else if (strcmp(*argv, "temp") == 0) {
 			;/* nothing */
+		} else if (strcmp(*argv, "stream_reserved") == 0) {
+			mdb_flags |= MDB_FLAGS_STREAM_RESERVED;
+			set_attrs = true;
 		} else if (strcmp(*argv, "vid") == 0) {
 			NEXT_ARG();
 			vid = atoi(*argv);
@@ -842,6 +848,10 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 
 		if (via && mdb_parse_dev(&req.n, sizeof(req), via))
 			return nodev(via);
+
+		if (mdb_flags)
+			addattr32(&req.n, sizeof(req), MDBE_ATTR_FLAGS,
+				  mdb_flags);
 
 		addattr_nest_end(&req.n, nest);
 	}
