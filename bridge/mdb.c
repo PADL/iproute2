@@ -33,7 +33,7 @@ static unsigned int filter_index, filter_vlan;
 static void usage(void)
 {
 	fprintf(stderr,
-		"Usage: bridge mdb { add | del | replace } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp] [vid VID]\n"
+		"Usage: bridge mdb { add | del | replace } dev DEV port PORT grp GROUP [src SOURCE] [permanent | temp | dynamic_reservation] [vid VID]\n"
 		"              [ filter_mode { include | exclude } ] [ source_list SOURCE_LIST ] [ proto PROTO ] [ dst IPADDR ]\n"
 		"              [ dst_port DST_PORT ] [ vni VNI ] [ src_vni SRC_VNI ] [ via DEV ]\n"
 		"       bridge mdb {show} [ dev DEV ] [ vid VID ]\n"
@@ -213,6 +213,7 @@ static void print_mdb_entry(FILE *f, int ifindex, const struct br_mdb_entry *e,
 				   inet_ntop(af, src, abuf, sizeof(abuf)));
 	}
 	print_string(PRINT_ANY, "state", " %s",
+			   e->state == MDB_DYNAMIC_RESERVATION ? "dynamic_reservation" :
 			   (e->state & MDB_PERMANENT) ? "permanent" : "temp");
 	if (show_details && tb) {
 		if (tb[MDBA_MDB_EATTR_GROUP_MODE]) {
@@ -706,6 +707,7 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 	char *src_list = NULL, *proto = NULL, *dst = NULL;
 	struct br_mdb_entry entry = {};
 	bool set_attrs = false;
+	__u32 mdb_flags = 0;
 	short vid = 0;
 
 	while (argc > 0) {
@@ -723,6 +725,9 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 				entry.state |= MDB_PERMANENT;
 		} else if (strcmp(*argv, "temp") == 0) {
 			;/* nothing */
+		} else if (strcmp(*argv, "dynamic_reservation") == 0) {
+			if (cmd == RTM_NEWMDB)
+				entry.state = MDB_DYNAMIC_RESERVATION;
 		} else if (strcmp(*argv, "vid") == 0) {
 			NEXT_ARG();
 			vid = atoi(*argv);
@@ -842,6 +847,10 @@ static int mdb_modify(int cmd, int flags, int argc, char **argv)
 
 		if (via && mdb_parse_dev(&req.n, sizeof(req), via))
 			return nodev(via);
+
+		if (mdb_flags)
+			addattr32(&req.n, sizeof(req), MDBE_ATTR_FLAGS,
+				  mdb_flags);
 
 		addattr_nest_end(&req.n, nest);
 	}

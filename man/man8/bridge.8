@@ -173,7 +173,9 @@ bridge \- show / manipulate bridge addresses and devices
 .B src_vni
 .IR SRC_VNI " ] [ "
 .B via
-.IR DEV " ]
+.IR DEV " ] [ "
+.B stream_reserved
+.RB " ]"
 
 .ti -8
 .BR "bridge mdb show" " [ "
@@ -1132,6 +1134,15 @@ from the file /etc/iproute2/rt_protos. If the routing protocol is not given,
 then
 .B static
 is assumed.
+
+.TP
+.B stream_reserved
+marks the port group as belonging to a reserved stream (typically one managed
+by the IEEE 802.1Q Stream Reservation Protocol). When the bridge has a
+.BR tc-mqprio (8)
+configuration that maps a frame's VLAN priority to a non-zero traffic class,
+multicast frames for such a group are delivered only to the stream-reserved
+member ports. Cannot be set for host groups.
 
 .in -8
 The next command line parameters apply only

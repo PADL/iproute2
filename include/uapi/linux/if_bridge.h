@@ -699,6 +699,7 @@ struct br_mdb_entry {
 	__u32 ifindex;
 #define MDB_TEMPORARY 0
 #define MDB_PERMANENT 1
+#define MDB_DYNAMIC_RESERVATION 2
 	__u8 state;
 #define MDB_FLAGS_OFFLOAD		(1 << 0)
 #define MDB_FLAGS_FAST_LEAVE		(1 << 1)
@@ -760,6 +761,7 @@ enum {
 	MDBE_ATTR_IFINDEX,
 	MDBE_ATTR_SRC_VNI,
 	MDBE_ATTR_STATE_MASK,
+	MDBE_ATTR_FLAGS,
 	__MDBE_ATTR_MAX,
 };
 #define MDBE_ATTR_MAX (__MDBE_ATTR_MAX - 1)
