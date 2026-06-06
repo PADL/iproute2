@@ -98,6 +98,7 @@ static void explain(void)
 		"			pfcp_opts MASKED-OPTIONS |\n"
 		"			ip_flags IP-FLAGS |\n"
 		"			l2_miss L2_MISS |\n"
+		"			dynamic_reservation_hit DRE_HIT |\n"
 		"			enc_dst_port [ port_number ] |\n"
 		"			ct_state MASKED_CT_STATE |\n"
 		"			ct_label MASKED_CT_LABEL |\n"
@@ -1722,6 +1723,16 @@ static int flower_parse_opt(const struct filter_util *qu, char *handle,
 				return -1;
 			}
 			addattr8(n, MAX_MSG, TCA_FLOWER_L2_MISS, l2_miss);
+		} else if (strcmp(*argv, "dynamic_reservation_hit") == 0) {
+			__u8 dre_hit;
+
+			NEXT_ARG();
+			if (get_u8(&dre_hit, *argv, 10)) {
+				fprintf(stderr, "Illegal \"dynamic_reservation_hit\"\n");
+				return -1;
+			}
+			addattr8(n, MAX_MSG, TCA_FLOWER_DYNAMIC_RESERVATION_HIT,
+				 dre_hit);
 		} else if (matches(*argv, "verbose") == 0) {
 			flags |= TCA_CLS_FLAGS_VERBOSE;
 		} else if (matches(*argv, "skip_hw") == 0) {
@@ -3306,6 +3317,15 @@ static int flower_print_opt(const struct filter_util *qu, FILE *f,
 
 		print_nl();
 		print_uint(PRINT_ANY, "l2_miss", "  l2_miss %u",
+			   rta_getattr_u8(attr));
+	}
+
+	if (tb[TCA_FLOWER_DYNAMIC_RESERVATION_HIT]) {
+		struct rtattr *attr = tb[TCA_FLOWER_DYNAMIC_RESERVATION_HIT];
+
+		print_nl();
+		print_uint(PRINT_ANY, "dynamic_reservation_hit",
+			   "  dynamic_reservation_hit %u",
 			   rta_getattr_u8(attr));
 	}
 
