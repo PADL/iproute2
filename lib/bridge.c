@@ -16,6 +16,9 @@ void bridge_print_vlan_flags(__u16 flags)
 
 	if (flags & BRIDGE_VLAN_INFO_UNTAGGED)
 		print_string(PRINT_ANY, NULL, " %s", "Egress Untagged");
+
+	if (flags & BRIDGE_VLAN_INFO_DYNAMIC)
+		print_string(PRINT_ANY, NULL, " %s", "Dynamic");
 	close_json_array(PRINT_JSON, NULL);
 }
 

@@ -34,6 +34,7 @@ static void usage(void)
 	fprintf(stderr,
 		"Usage: bridge vlan { add | del } vid VLAN_ID dev DEV [ tunnel_info id TUNNEL_ID ]\n"
 		"                                                     [ pvid ] [ untagged ]\n"
+		"                                                     [ dynamic ]\n"
 		"                                                     [ self ] [ master ]\n"
 		"       bridge vlan { set } vid VLAN_ID dev DEV [ state STP_STATE ]\n"
 		"                                               [ mcast_router MULTICAST_ROUTER ]\n"
@@ -201,6 +202,8 @@ static int vlan_modify(int cmd, int argc, char **argv)
 			vinfo.flags |= BRIDGE_VLAN_INFO_PVID;
 		} else if (strcmp(*argv, "untagged") == 0) {
 			vinfo.flags |= BRIDGE_VLAN_INFO_UNTAGGED;
+		} else if (strcmp(*argv, "dynamic") == 0) {
+			vinfo.flags |= BRIDGE_VLAN_INFO_DYNAMIC;
 		} else if (strcmp(*argv, "tunnel_info") == 0) {
 				if (parse_tunnel_info(&argc, &argv,
 						      &tun_id_start,
